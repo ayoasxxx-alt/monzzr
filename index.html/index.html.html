@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>منصة منذر - الإصدار الفخم</title>
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+
+    <style>
+        /* التنسيق الفخم */
+        body { 
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding-bottom: 90px;
+            color: #333;
+            min-height: 100vh;
+        }
+
+        header { 
+            background: linear-gradient(to right, #0062E6, #33AEFF);
+            color: white;
+            width: 100%;
+            padding: 20px;
+            text-align: center;
+            font-size: 22px;
+            font-weight: 800;
+            box-shadow: 0 4px 15px rgba(0, 123, 255, 0.3);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            border-radius: 0 0 20px 20px;
+        }
+
+        .container { width: 95%; max-width: 500px; margin-top: 20px; }
+
+        .card { 
+            background: white; 
+            padding: 20px; 
+            border-radius: 18px; 
+            box-shadow: 0 10px 20px rgba(0,0,0,0.05);
+            margin-bottom: 20px;
+            border: none;
+        }
+
+        input, textarea { 
+            width: 100%; 
+            padding: 12px; 
+            margin: 8px 0; 
+            border: 1px solid #e1e4e8; 
+            border-radius: 12px; 
+            box-sizing: border-box; 
+            font-size: 15px;
+            background: #f9fbff;
+        }
+
+        button { 
+            width: 100%; 
+            padding: 12px; 
+            background: linear-gradient(to right, #007bff, #00c6ff);
+            color: white; 
+            border: none; 
+            border-radius: 12px; 
+            cursor: pointer; 
+            font-weight: bold;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 6px rgba(0, 123, 255, 0.2);
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0, 123, 255, 0.4);
+        }
+
+        /* تنسيق المنشورات */
+        .post-card { 
+            background: white; 
+            padding: 20px; 
+            border-radius: 18px; 
+            margin-bottom: 20px; 
+            box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+            text-align: right;
+            transition: 0.3s;
+        }
+
+        .post-header { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+        .post-header i { color: #007bff; font-size: 20px; }
+        .post-header strong { color: #2c3e50; font-size: 14px; }
+
+        .post-content { font-size: 16px; line-height: 1.6; color: #444; margin-bottom: 15px; }
+
+        /* نظام التعليقات */
+        .comment-section { 
+            background: #f8fbff; 
+            border-radius: 15px; 
+            padding: 12px; 
+            margin-top: 15px;
+            border: 1px solid #edf2f7;
+        }
+
+        .comment { 
+            font-size: 13px; 
+            padding: 8px 0; 
+            border-bottom: 1px solid #eef2f7;
+        }
+
+        .comment-user { color: #007bff; font-weight: 700; margin-left: 5px; }
+
+        /* شريط التنقل السفلي الاحترافي */
+        .bottom-nav { 
+            position: fixed; 
+            bottom: 0; 
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            width: 100%; 
+            display: flex; 
+            justify-content: space-around; 
+            padding: 12px 0; 
+            box-shadow: 0 -5px 20px rgba(0,0,0,0.05);
+            z-index: 1000;
+            border-radius: 25px 25px 0 0;
+        }
+
+        .nav-item { 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            color: #a0aec0; 
+            cursor: pointer; 
+            font-size: 11px;
+            transition: 0.3s;
+        }
+
+        .nav-item.active { color: #007bff; }
+        .nav-item i { font-size: 24px; margin-bottom: 4px; }
+    </style>
+</head>
+<body>
+
+    <header id="pageTitle">الساحة العامة</header>
+
+    <div id="navBar" class="bottom-nav" style="display:none;">
+        <div class="nav-item active" id="homeIcon" onclick="switchTab('public')">
+            <i class="fa-solid fa-house"></i><span>الرئيسية</span>
+        </div>
+        <div class="nav-item" id="userIcon" onclick="switchTab('private')">
+            <i class="fa-solid fa-circle-user"></i><span>منشوراتي</span>
+        </div>
+        <div class="nav-item" onclick="handleLogout()">
+            <i class="fa-solid fa-arrow-right-from-bracket"></i><span>خروج</span>
+        </div>
+    </div>
+
+    <div class="container">
+        <div id="loginSection" class="card">
+            <h2 style="text-align:center; color:#2c3e50;">مرحباً بك يا منذر</h2>
+            <p style="text-align:center; font-size:14px; color:#718096;">سجل دخولك للبدء</p>
+            <input type="email" id="loginEmail" placeholder="البريد الإلكتروني">
+            <input type="password" id="loginPass" placeholder="كلمة المرور">
+            <button onclick="handleLogin()">دخول آمن</button>
+        </div>
+
+        <div id="appSection" style="display:none;">
+            <div id="postBox" class="card">
+                <textarea id="postText" rows="3" placeholder="بماذا تفكر اليوم؟"></textarea>
+                <button onclick="savePost()"><i class="fa-solid fa-paper-plane"></i> نشر المنشور</button>
+            </div>
+            <div id="allPosts"></div>
+        </div>
+    </div>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyDat3Y9CFR1ekMPhKjwLka5YOR0sLV3w1k",
+            authDomain: "fangre-2026.firebaseapp.com",
+            projectId: "fangre-2026",
+            storageBucket: "fangre-2026.firebasestorage.app",
+            messagingSenderId: "429298728907",
+            appId: "1:429298728907:web:701ea37df8547ca70f004e"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        let currentTab = 'public';
+
+        function handleLogin() {
+            const e = document.getElementById('loginEmail').value;
+            const p = document.getElementById('loginPass').value;
+            auth.signInWithEmailAndPassword(e, p).catch(err => alert("تأكد من البريد وكلمة المرور"));
+        }
+
+        function handleLogout() { auth.signOut(); location.reload(); }
+
+        auth.onAuthStateChanged(user => {
+            if (user) {
+                document.getElementById('loginSection').style.display = 'none';
+                document.getElementById('appSection').style.display = 'block';
+                document.getElementById('navBar').style.display = 'flex';
+                renderPosts();
+            }
+        });
+
+        function switchTab(type) {
+            currentTab = type;
+            document.getElementById('pageTitle').innerText = (type === 'public') ? "الساحة العامة" : "منشوراتي الخاصة";
+            document.getElementById('postBox').style.display = (type === 'public') ? "block" : "none";
+            document.getElementById('homeIcon').classList.toggle('active', type === 'public');
+            document.getElementById('userIcon').classList.toggle('active', type === 'private');
+            renderPosts();
+        }
+
+        function savePost() {
+            const content = document.getElementById('postText').value;
+            if (!content.trim()) return;
+
+            db.collection("posts").add({
+                uName: auth.currentUser.email.split('@')[0], // عرض الجزء الأول من الإيميل كاسم
+                uId: auth.currentUser.uid,
+                text: content,
+                time: firebase.firestore.FieldValue.serverTimestamp(),
+                likes: [],
+                comments: []
+            }).then(() => { document.getElementById('postText').value = ""; });
+        }
+
+        async function saveComment(postId) {
+            const inputId = "in-" + postId;
+            const commentVal = document.getElementById(inputId).value;
+            if (!commentVal.trim()) return;
+
+            const commentObj = {
+                user: auth.currentUser.email.split('@')[0],
+                msg: commentVal
+            };
+
+            await db.collection("posts").doc(postId).update({
+                comments: firebase.firestore.FieldValue.arrayUnion(commentObj)
+            });
+            document.getElementById(inputId).value = "";
+        }
+
+        async function toggleLike(postId) {
+            const myId = auth.currentUser.uid;
+            const ref = db.collection("posts").doc(postId);
+            const doc = await ref.get();
+            const likes = doc.data().likes || [];
+
+            if (likes.includes(myId)) {
+                ref.update({ likes: firebase.firestore.FieldValue.arrayRemove(myId) });
+            } else {
+                ref.update({ likes: firebase.firestore.FieldValue.arrayUnion(myId) });
+            }
+        }
+
+        function deletePost(id) { if (confirm("هل أنت متأكد من حذف هذا المنشور؟")) db.collection("posts").doc(id).delete(); }
+
+        function renderPosts() {
+            let query = db.collection("posts").orderBy("time", "desc");
+            if (currentTab === 'private') {
+                query = db.collection("posts").where("uId", "==", auth.currentUser.uid).orderBy("time", "desc");
+            }
+
+            query.onSnapshot(snap => {
+                let html = "";
+                snap.forEach(doc => {
+                    const data = doc.data();
+                    const id = doc.id;
+                    const likesCount = (data.likes || []).length;
+                    const comments = data.comments || [];
+                    const isMyPost = data.uId === auth.currentUser.uid;
+
+                    html += `
+                        <div class="post-card">
+                            <div class="post-header">
+                                <i class="fa-solid fa-circle-user"></i>
+                                <strong>${data.uName}</strong>
+                            </div>
+                            <div class="post-content">${data.text}</div>
+                            
+                            <div style="display:flex; justify-content:space-between; align-items:center;">
+                                <button onclick="toggleLike('${id}')" style="width:auto; background:none; color:#007bff; border:1px solid #007bff; padding:5px 15px; border-radius:20px; font-size:13px;">
+                                    ❤️ ${likesCount} أعجبني
+                                </button>
+                            </div>
+                            
+                            <div class="comment-section">
+                                <div style="display:flex; gap:8px; margin-top:12px;">
+                                    <input type="text" id="in-${id}" placeholder="اكتب تعليقاً..." style="margin:0; padding:8px; font-size:13px; flex:1;">
+                                    <button onclick="saveComment('${id}')" style="width:auto; padding:8px 15px; font-size:12px;">رد</button>
+                                </div>
+                            </div>
+                        </div>`;
+                });
+                document.getElementById('allPosts').innerHTML = html || "<p style='text-align:center; color:#718096; margin-top:20px;'>لا توجد منشورات لعرضها</p>";
+            });
+        }
+    </script>
+</body>
+</html>
